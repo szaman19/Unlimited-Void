@@ -16,3 +16,11 @@ No, but I wanted to do this. This adds all sorts of latency, going through http 
 ## How do I use it?
 
 Checkout the examples in the `examples` folder. 
+
+## How do I install it?
+
+You can install it with pip:
+
+```bash
+pip install git+https://github.com/szaman19/Unlimited-Void
+```
