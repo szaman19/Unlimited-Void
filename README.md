@@ -12,7 +12,10 @@ We wrap the `torch.utils.data.Dataset` with a simple server that can serve the d
 
 ## Is this the best way to do it?
 
-No, but I wanted to do this. This adds all sorts of latency, going through http and tcp and what not. Most of which can be overcome with some caching and other techniques. In general, this is not the best way to do it. But it is a fun way to do it.
+No, but I wanted to do this. This adds all sorts of latency, due to `http` and `TCP` overhead and what not. Most of which can be overcome with some caching and other techniques. In general, this is not the best way to do it. But it is a fun way to do it.
+
+Another interesting way would be to start a deamon process and communicate via IPC (pipes, rpc, shared memory, etc.). Communicating over unix domain sockets (`UDS`) would be significantly faster than going over `TCP`.
+
 
 ## How do I use it?
 
