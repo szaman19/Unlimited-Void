@@ -27,3 +27,7 @@ The way the data is obtain and returned is also entirely up to you and done in `
 ```bash
 python dataset.py
 ```
+
+**NOTE: Don't go overboard and do too many requests. Be nice to the Wikipedia servers.**
+
+**NOTE: This example requires internet access.**
