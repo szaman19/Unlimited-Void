@@ -3,7 +3,7 @@ import os
 import os.path as osp
 import subprocess
 from typing import Callable, Optional, Any
-from Unlimited_Void.helpers import wait_for_port
+from Unlimited_Void.helpers import wait_for_port, wait_for_uds
 import sys
 
 
@@ -17,6 +17,7 @@ class UnlimitedVoidDataset(Dataset):
         transform: Optional[Callable] = None,
         timeout: float = 10.0,
         server_log_file: Optional[str] = None,
+        uds_socket: Optional[str] = None,
     ):
         """
         Args:
@@ -63,8 +64,13 @@ class UnlimitedVoidDataset(Dataset):
         else:
             log_f = sys.stdout
             self.log_file = None
+        cmd = ["flask", "run"]
+        if uds_socket is not None:
+            cmd += [f"--host=unix://{uds_socket}"]
+        else:
+            cmd += ["--port", str(self.port)]
         p = subprocess.Popen(
-            ["flask", "run", "--port", str(self.port)],
+            cmd,
             cwd=file_dir,
             stdout=log_f,
             stderr=log_f,
@@ -73,10 +79,14 @@ class UnlimitedVoidDataset(Dataset):
         )
 
         # Wait for the server to start
-        if not wait_for_port(self.port, timeout=timeout):
-            # Check if the server is running
-            if p.returncode != 0:
-                raise RuntimeError("Server failed to start.")
+        if uds_socket is not None:
+            if not wait_for_uds(uds_socket, timeout=timeout):
+                if p.returncode != 0:
+                    raise RuntimeError("Server failed to start.")
+        else:
+            if not wait_for_port(self.port, timeout=timeout):
+                if p.returncode != 0:
+                    raise RuntimeError("Server failed to start.")
         self.server_process = p
         self.max_size = max_size
         self.transform = transform

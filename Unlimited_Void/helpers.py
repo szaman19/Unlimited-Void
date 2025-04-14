@@ -59,3 +59,16 @@ def wait_for_port(port, host="127.0.0.1", timeout=10.0):
         except OSError:
             time.sleep(0.2)
     return False
+
+
+def wait_for_uds(uds_socket: str, timeout: float = 10.0) -> bool:
+    """Wait until a UDS socket is open (up to a timeout)."""
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+                s.connect(uds_socket)
+                return True
+        except OSError:
+            time.sleep(0.2)
+    return False

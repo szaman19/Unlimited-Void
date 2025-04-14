@@ -21,6 +21,7 @@ def get_data():
         summary = data["extract"]
         retrieved_num_chars = len(summary)
         print(f"Retrieved {retrieved_num_chars} characters from Wikipedia.")
+
         # Create a string with the specified number of characters
         if retrieved_num_chars > num_characters:
             summary = summary[:num_characters]
