@@ -10,6 +10,10 @@ PyTorch models load the data through a combination of `torch.utils.data.Dataset`
 This library provides a simple way to start a server that can serve data to your model.
 We wrap the `torch.utils.data.Dataset` with a simple server that can serve the data to your model. The server is concerned with obtaining the data (from disk, from a database, from the internet, etc.) sufficiently pre-process it, and serve it to the model process. 
 
+<p align="center">
+  <img src="assets/flow-chart.png" alt="Flowchart" />
+</p>
+
 ## Is this the best way to do it?
 
 No, but I wanted to do this. This adds all sorts of latency, due to `http` and `TCP` overhead and what not. Most of which can be overcome with some caching and other techniques. In general, this is not the best way to do it. But it is a fun way to do it.
