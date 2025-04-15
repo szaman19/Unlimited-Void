@@ -1,6 +1,8 @@
 from typing import Optional, Callable, Any
 import time
 import socket
+import multiprocessing as mp
+import time
 
 
 class ProducerConsumer:
@@ -9,8 +11,6 @@ class ProducerConsumer:
         producer: Callable,
         consumer=None,
         cache_size=10,
-        fill_ratio=0.5,
-        fill_batch_size: int = 10,
     ):
         """
         A relatively simple producer-consumer pattern that uses a list as a cache.
@@ -21,32 +21,53 @@ class ProducerConsumer:
             producer (Callable): Function to produce items.
             consumer (Callable, optional): Function to consume items. Defaults to None.
             cache_size (int, optional): Size of the cache. Defaults to 10.
-            fill_ratio (float, optional): Ratio of the cache to be filled. Defaults to 0.5.
-            fill_batch_size (int, optional): Number of items to fill the cache with. Defaults to 10.
         """
         self.producer = producer
         self.consumer = consumer
         self.cache_size = cache_size
-        self.fill_ratio = fill_ratio
 
-        self.cache = []
-        self.fill_batch_size = fill_batch_size
+        self.cache = mp.Queue(maxsize=cache_size)
+        self._start_producer()
 
-    def pop(self, *args):
-        assert self.cache, "Cache is empty. Cannot pop."
-        item = self.cache.pop(0)
-        if self.consumer:
-            item = self.consumer(item)
+    def _produce(self):
+        while True:
+            if not self.cache.full():
+                item = self.producer()
+                self.cache.put(item)
+            else:
+                time.sleep(0.1)
 
-        # If the cache is less than fill_ratio, refill it
-        if len(self.cache) < self.cache_size * self.fill_ratio:
-            for _ in range(self.fill_batch_size):
-                item = self.producer(*args)
-                self.cache.append(item)
+    def _start_producer(self):
+        self.process = mp.Process(target=self._produce)
+        self.process.daemon = True
+        self.process.start()
 
-                if len(self.cache) >= self.cache_size:
-                    break
+    def update_producer(self, producer: Callable):
+        if self.process.is_alive():
+            self.process.terminate()
+            self.process.join()
+        self.producer = producer
+        self._start_producer()
+
+    def pop(self, num_retries=10, timeout=None, *args):
+
+        for i in range(num_retries):
+            try:
+                item = self.cache.get(timeout=timeout)
+                if self.consumer:
+                    item = self.consumer(item, *args)
+                return item
+            except Exception as e:
+                time.sleep(0.1)
+                if i == num_retries - 1:
+                    return None
+
         return item
+
+    def __del__(self):
+        if self.process.is_alive():
+            self.process.terminate()
+            self.process.join()
 
 
 def wait_for_port(port, host="127.0.0.1", timeout=10.0):
